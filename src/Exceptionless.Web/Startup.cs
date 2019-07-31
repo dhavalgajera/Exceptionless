@@ -19,6 +19,8 @@ using Exceptionless.Web.Extensions;
 using Foundatio.Extensions.Hosting.Startup;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Serilog;
@@ -59,6 +61,10 @@ namespace Exceptionless.Web {
                 o.SerializerSettings.NullValueHandling = NullValueHandling.Include;
                 o.SerializerSettings.Formatting = Formatting.Indented;
                 o.SerializerSettings.ContractResolver = Core.Bootstrapper.GetJsonContractResolver(); // TODO: See if we can resolve this from the di.
+            });
+
+            services.AddSpaStaticFiles(c => {
+                c.RootPath = "ClientApp/dist";
             });
 
             services.AddAuthentication(ApiKeyAuthenticationOptions.ApiKeySchema).AddApiKeyAuthentication();
@@ -189,6 +195,17 @@ namespace Exceptionless.Web {
                     .From("http://cdn.jsdelivr.net");
             });
 
+            var contentTypeProvider = new FileExtensionContentTypeProvider {
+                Mappings = {
+                    [".less"] = "plain/text"
+                }
+            };
+
+            app.UseStaticFiles(new StaticFileOptions {
+                ContentTypeProvider = contentTypeProvider
+            });
+            app.UseSpaStaticFiles();
+
             app.Use(async (context, next) => {
                 if (options.AppMode != AppMode.Development && context.Request.IsLocal() == false)
                     context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
@@ -241,7 +258,7 @@ namespace Exceptionless.Web {
 
             if (options.ApiThrottleLimit < Int32.MaxValue) {
                 // Throttle api calls to X every 15 minutes by IP address.
-                app.UseMiddleware<ThrottlingMiddleware>();
+                //app.UseMiddleware<ThrottlingMiddleware>();
             }
 
             // Reject event posts in organizations over their max event limits.
@@ -261,9 +278,14 @@ namespace Exceptionless.Web {
                 app.UseMiddleware<MessageBusBrokerMiddleware>();
             }
 
-            app.UseEndpoints(endpoints => {
-                endpoints.MapControllers();
-                endpoints.MapFallbackToFile("{**slug:nonfile}", "index.html");
+            app.UseSpa(spa => {
+                // To learn more about options for serving an Angular SPA from ASP.NET Core,
+                // see https://go.microsoft.com/fwlink/?linkid=864501
+
+                spa.Options.SourcePath = "ClientApp";
+                
+                if (options.AppMode == AppMode.Development)
+                    spa.UseProxyToSpaDevelopmentServer("http://localhost:5100");
             });
         }
     }
