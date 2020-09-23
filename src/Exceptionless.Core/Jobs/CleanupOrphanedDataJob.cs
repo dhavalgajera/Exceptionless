@@ -44,6 +44,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(CleanupOrphanedDataJob));
+
             await DeleteOrphanedEventsByStackAsync(context).AnyContext();
             await DeleteOrphanedEventsByProjectAsync(context).AnyContext();
             await DeleteOrphanedEventsByOrganizationAsync(context).AnyContext();

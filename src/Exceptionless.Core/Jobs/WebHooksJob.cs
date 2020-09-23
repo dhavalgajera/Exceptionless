@@ -43,6 +43,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> ProcessQueueEntryAsync(QueueEntryContext<WebHookNotification> context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(WebHooksJob));
+
             var body = context.QueueEntry.Value;
             bool shouldLog = body.ProjectId != _appOptions.InternalProjectId;
             using (_logger.BeginScope(new ExceptionlessState().Organization(body.OrganizationId).Project(body.ProjectId))) {

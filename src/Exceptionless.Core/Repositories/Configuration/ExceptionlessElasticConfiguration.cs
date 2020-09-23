@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Exceptionless.Core.Configuration;
 using Exceptionless.Core.Extensions;
 using Exceptionless.Core.Repositories.Queries;
 using Exceptionless.Core.Serialization;
+using Exceptionless.Core.Utility;
 using Foundatio.Caching;
 using Foundatio.Extensions.Hosting.Startup;
 using Foundatio.Jobs;
@@ -47,11 +49,12 @@ namespace Exceptionless.Core.Repositories.Configuration {
             AddIndex(WebHooks = new WebHookIndex(this));
         }
 
-        public Task RunAsync(CancellationToken shutdownToken = default) {
+        public async Task RunAsync(CancellationToken shutdownToken = default) {
             if (_appOptions.ElasticsearchOptions.DisableIndexConfiguration)
-                return Task.CompletedTask;
+                return;
 
-            return ConfigureIndexesAsync();
+            using var activity = ActivitySources.StartupActivitySource.StartActivity("ExceptionlessElasticConfiguration");
+            await ConfigureIndexesAsync();
         }
 
         public override void ConfigureGlobalQueryBuilders(ElasticQueryBuilder builder) {

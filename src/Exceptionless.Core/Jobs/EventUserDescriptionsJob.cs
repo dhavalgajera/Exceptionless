@@ -22,6 +22,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> ProcessQueueEntryAsync(QueueEntryContext<EventUserDescription> context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(EventUserDescriptionsJob));
+
             _logger.LogTrace("Processing user description: id={0}", context.QueueEntry.Id);
 
             try {

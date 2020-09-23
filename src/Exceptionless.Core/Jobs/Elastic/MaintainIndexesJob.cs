@@ -16,6 +16,8 @@ namespace Exceptionless.Core.Jobs.Elastic {
         public MaintainIndexesJob(ExceptionlessElasticConfiguration configuration, ILockProvider lockProvider, ILoggerFactory loggerFactory) : base(configuration, lockProvider, loggerFactory) {}
 
         public override Task<JobResult> RunAsync(CancellationToken cancellationToken = new CancellationToken()) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(MaintainIndexesJob));
+
             _lastRun = SystemClock.UtcNow;
             return base.RunAsync(cancellationToken);
         }

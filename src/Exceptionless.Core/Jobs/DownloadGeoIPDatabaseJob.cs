@@ -33,6 +33,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(DownloadGeoIPDatabaseJob));
+
             _lastRun = SystemClock.UtcNow;
 
             string licenseKey = _options.MaxMindGeoIpKey;

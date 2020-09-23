@@ -21,6 +21,8 @@ namespace Exceptionless.Core.Jobs.Elastic {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(MigrationJob));
+
             await _configuration.ConfigureIndexesAsync(null, false).AnyContext();
             await _migrationManager.RunMigrationsAsync().AnyContext();
 

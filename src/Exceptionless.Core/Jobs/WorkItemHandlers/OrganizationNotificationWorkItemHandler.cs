@@ -60,6 +60,8 @@ namespace Exceptionless.Core.Jobs.WorkItemHandlers {
         }
 
         public override async Task HandleItemAsync(WorkItemContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(OrganizationNotificationWorkItemHandler));
+
             var workItem = context.GetData<OrganizationNotificationWorkItem>();
             Log.LogInformation("Received organization notification work item for: {organization} IsOverHourlyLimit: {IsOverHourlyLimit} IsOverMonthlyLimit: {IsOverMonthlyLimit}", workItem.OrganizationId, workItem.IsOverHourlyLimit, workItem.IsOverMonthlyLimit);
 

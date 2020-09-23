@@ -26,6 +26,8 @@ namespace Exceptionless.Core.Jobs.WorkItemHandlers {
         }
 
         public override async Task HandleItemAsync(WorkItemContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(RemoveStacksWorkItemHandler));
+
             var wi = context.GetData<RemoveStacksWorkItem>();
             using (Log.BeginScope(new ExceptionlessState().Organization(wi.OrganizationId).Project(wi.ProjectId))) {
                 Log.LogInformation("Received remove stacks work item for project: {ProjectId}", wi.ProjectId);

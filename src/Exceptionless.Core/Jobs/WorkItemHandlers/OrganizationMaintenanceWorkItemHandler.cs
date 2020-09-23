@@ -32,6 +32,8 @@ namespace Exceptionless.Core.Jobs.WorkItemHandlers {
         }
 
         public override async Task HandleItemAsync(WorkItemContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(OrganizationMaintenanceWorkItemHandler));
+
             const int LIMIT = 100;
             var wi = context.GetData<OrganizationMaintenanceWorkItem>();
             Log.LogInformation("Received upgrade organizations work item. Upgrade Plans: {UpgradePlans}", wi.UpgradePlans);

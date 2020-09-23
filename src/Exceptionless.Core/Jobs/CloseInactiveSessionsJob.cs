@@ -34,6 +34,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(CloseInactiveSessionsJob));
+
             _lastActivity = SystemClock.UtcNow;
             var results = await _eventRepository.GetOpenSessionsAsync(SystemClock.UtcNow.SubtractMinutes(1), o => o.SnapshotPaging().PageLimit(100)).AnyContext();
             int sessionsClosed = 0;

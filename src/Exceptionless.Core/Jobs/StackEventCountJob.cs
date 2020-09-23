@@ -27,6 +27,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(StackEventCountJob));
+
             _lastRun = SystemClock.UtcNow;
             _logger.LogTrace("Start save stack event counts.");
             await _stackService.SaveStackUsagesAsync(cancellationToken: context.CancellationToken).AnyContext();

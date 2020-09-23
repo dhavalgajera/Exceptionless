@@ -17,6 +17,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> ProcessQueueEntryAsync(QueueEntryContext<MailMessage> context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(MailMessageJob));
+
             _logger.LogTrace("Processing message {Id}.", context.QueueEntry.Id);
 
             try {

@@ -29,6 +29,8 @@ namespace Exceptionless.Core.Jobs.WorkItemHandlers {
         }
 
         public override async Task HandleItemAsync(WorkItemContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(SetProjectIsConfiguredWorkItemHandler));
+
             var workItem = context.GetData<SetProjectIsConfiguredWorkItem>();
             Log.LogInformation("Setting Is Configured for project: {project}", workItem.ProjectId);
 

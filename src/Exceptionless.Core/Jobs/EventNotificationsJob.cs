@@ -45,6 +45,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> ProcessQueueEntryAsync(QueueEntryContext<EventNotification> context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(EventNotificationsJob));
+
             var wi = context.QueueEntry.Value;
             var ev = await _eventRepository.GetByIdAsync(wi.EventId).AnyContext();
             if (ev == null)

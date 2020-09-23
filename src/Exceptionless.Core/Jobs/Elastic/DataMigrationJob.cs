@@ -29,6 +29,8 @@ namespace Exceptionless.Core.Jobs.Elastic {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(DataMigrationJob));
+
             var elasticOptions = _configuration.Options;
             if (elasticOptions.ElasticsearchToMigrate == null)
                 return JobResult.CancelledWithMessage($"Please configure the connection string EX_{nameof(elasticOptions.ElasticsearchToMigrate)}.");

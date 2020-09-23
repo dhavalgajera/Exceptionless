@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Elasticsearch.Net;
+using Exceptionless.Core;
 using Exceptionless.Core.Repositories.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,8 @@ namespace Exceptionless.Insulation.HealthChecks {
         }
         
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) {
+            using var activity = ActivitySources.HealthCheckActivitySource.StartActivity(nameof(ElasticsearchHealthCheck));
+
             var sw = Stopwatch.StartNew();
 
             try {

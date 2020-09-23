@@ -7,7 +7,6 @@ using Exceptionless.Core.Models;
 using Exceptionless.Core.Repositories;
 using Exceptionless.Core.Services;
 using Exceptionless.DateTimeExtensions;
-using Foundatio.Caching;
 using Foundatio.Jobs;
 using Foundatio.Lock;
 using Foundatio.Repositories;
@@ -62,6 +61,8 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
+            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(CleanupDataJob));
+
             _lastRun = SystemClock.UtcNow;
 
             await CleanupSoftDeletedOrganizationsAsync(context).AnyContext();
