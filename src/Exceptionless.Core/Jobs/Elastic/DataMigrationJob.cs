@@ -17,7 +17,7 @@ using Nest;
 
 namespace Exceptionless.Core.Jobs.Elastic {
     [Job(Description = "Migrate data to new format.", IsContinuous = false)]
-    public class DataMigrationJob : JobBase {
+    public class DataMigrationJob : AppJobBase {
         private readonly ExceptionlessElasticConfiguration _configuration;
         private const string MIGRATE_VERSION_SCRIPT = "if (ctx._source.version instanceof String == false) { ctx._source.version = 'v' + ctx._source.version.major; }";
 
@@ -29,8 +29,6 @@ namespace Exceptionless.Core.Jobs.Elastic {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(DataMigrationJob));
-
             var elasticOptions = _configuration.Options;
             if (elasticOptions.ElasticsearchToMigrate == null)
                 return JobResult.CancelledWithMessage($"Please configure the connection string EX_{nameof(elasticOptions.ElasticsearchToMigrate)}.");

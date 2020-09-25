@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Closes inactive user sessions.", InitialDelay = "30s", Interval = "30s")]
-    public class CloseInactiveSessionsJob : JobWithLockBase, IHealthCheck {
+    public class CloseInactiveSessionsJob : AppJobWithLockBase, IHealthCheck {
         private readonly IEventRepository _eventRepository;
         private readonly ICacheClient _cache;
         private readonly ILockProvider _lockProvider;
@@ -34,8 +34,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(CloseInactiveSessionsJob));
-
             _lastActivity = SystemClock.UtcNow;
             var results = await _eventRepository.GetOpenSessionsAsync(SystemClock.UtcNow.SubtractMinutes(1), o => o.SnapshotPaging().PageLimit(100)).AnyContext();
             int sessionsClosed = 0;

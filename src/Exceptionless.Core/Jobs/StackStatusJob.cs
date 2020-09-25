@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Update stack statuses", InitialDelay = "10s", Interval = "30s")]
-    public class StackStatusJob : JobWithLockBase, IHealthCheck {
+    public class StackStatusJob : AppJobWithLockBase, IHealthCheck {
         private readonly IStackRepository _stackRepository;
         private readonly ILockProvider _lockProvider;
         private DateTime? _lastRun;
@@ -29,8 +29,6 @@ namespace Exceptionless.Core.Jobs {
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
             const int LIMIT = 100;
-
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(StackStatusJob));
 
             _lastRun = SystemClock.UtcNow;
             _logger.LogTrace("Start save stack event counts.");

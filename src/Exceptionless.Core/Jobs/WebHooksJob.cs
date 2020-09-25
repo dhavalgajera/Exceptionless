@@ -19,7 +19,7 @@ using Newtonsoft.Json;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Processes queued web hook messages.", InitialDelay = "5s")]
-    public class WebHooksJob : QueueJobBase<WebHookNotification>, IDisposable {
+    public class WebHooksJob : AppQueueJobBase<WebHookNotification>, IDisposable {
         private const string ConsecutiveErrorsCacheKey = "errors";
         private const string FirstAttemptCacheKey = "first-attempt";
         private const string LastAttemptCacheKey = "last-attempt";
@@ -43,8 +43,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> ProcessQueueEntryAsync(QueueEntryContext<WebHookNotification> context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(WebHooksJob));
-
             var body = context.QueueEntry.Value;
             bool shouldLog = body.ProjectId != _appOptions.InternalProjectId;
             using (_logger.BeginScope(new ExceptionlessState().Organization(body.OrganizationId).Project(body.ProjectId))) {

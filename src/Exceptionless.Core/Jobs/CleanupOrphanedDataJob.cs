@@ -21,7 +21,7 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Deletes orphaned data.", IsContinuous = false)]
-    public class CleanupOrphanedDataJob : JobWithLockBase, IHealthCheck {
+    public class CleanupOrphanedDataJob : AppJobWithLockBase, IHealthCheck {
         private readonly ExceptionlessElasticConfiguration _config;
         private readonly IElasticClient _elasticClient;
         private readonly IStackRepository _stackRepository;
@@ -44,8 +44,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(CleanupOrphanedDataJob));
-
             await DeleteOrphanedEventsByStackAsync(context).AnyContext();
             await DeleteOrphanedEventsByProjectAsync(context).AnyContext();
             await DeleteOrphanedEventsByOrganizationAsync(context).AnyContext();

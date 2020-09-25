@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Exceptionless.Core.Jobs.Elastic {
     [Job(Description = "Runs any pending document migrations.", IsContinuous = false)]
-    public class MigrationJob : JobBase {
+    public class MigrationJob : AppJobBase {
         private readonly MigrationManager _migrationManager;
         private readonly ExceptionlessElasticConfiguration _configuration;
 
@@ -21,8 +21,6 @@ namespace Exceptionless.Core.Jobs.Elastic {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(MigrationJob));
-
             await _configuration.ConfigureIndexesAsync(null, false).AnyContext();
             await _migrationManager.RunMigrationsAsync().AnyContext();
 

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Exceptionless.Core;
 using Exceptionless.Core.Extensions;
 using Foundatio.Caching;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -18,6 +19,8 @@ namespace Exceptionless.Insulation.HealthChecks {
         }
         
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) {
+            using var activity = ActivitySources.HealthCheckActivitySource.StartActivity(nameof(CacheHealthCheck));
+
             var sw = Stopwatch.StartNew();
             try {
                 var cache = new ScopedCacheClient(_cache, "health");

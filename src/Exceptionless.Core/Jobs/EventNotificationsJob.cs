@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Queues event notification emails.", InitialDelay = "5s")]
-    public class EventNotificationsJob : QueueJobBase<EventNotification> {
+    public class EventNotificationsJob : AppQueueJobBase<EventNotification> {
         private readonly SlackService _slackService;
         private readonly IMailer _mailer;
         private readonly IProjectRepository _projectRepository;
@@ -45,8 +45,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> ProcessQueueEntryAsync(QueueEntryContext<EventNotification> context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(EventNotificationsJob));
-
             var wi = context.QueueEntry.Value;
             var ev = await _eventRepository.GetByIdAsync(wi.EventId).AnyContext();
             if (ev == null)

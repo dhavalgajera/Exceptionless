@@ -27,8 +27,6 @@ namespace Exceptionless.Core.Jobs.WorkItemHandlers
         }
 
         public override async Task HandleItemAsync(WorkItemContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(RemoveBotEventsWorkItemHandler));
-
             var wi = context.GetData<RemoveBotEventsWorkItem>();
             using (Log.BeginScope(new ExceptionlessState().Organization(wi.OrganizationId))) {
                 Log.LogInformation("Received remove bot events work item OrganizationId={OrganizationId}, ClientIpAddress={ClientIpAddress}, UtcStartDate={UtcStartDate}, UtcEndDate={UtcEndDate}", wi.OrganizationId, wi.ClientIpAddress, wi.UtcStartDate, wi.UtcEndDate);

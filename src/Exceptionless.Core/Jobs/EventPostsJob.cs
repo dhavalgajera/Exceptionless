@@ -26,7 +26,7 @@ using Newtonsoft.Json;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Processes queued events.", InitialDelay = "2s")]
-    public class EventPostsJob : QueueJobBase<EventPost> {
+    public class EventPostsJob : AppQueueJobBase<EventPost> {
         private readonly long _maximumEventPostFileSize;
         private readonly long _maximumUncompressedEventPostSize;
 
@@ -58,8 +58,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> ProcessQueueEntryAsync(QueueEntryContext<EventPost> context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(EventPostsJob));
-
             var entry = context.QueueEntry;
             var ep = entry.Value;
             string payloadPath = Path.ChangeExtension(entry.Value.FilePath, ".payload");

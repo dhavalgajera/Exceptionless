@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Update event occurrence count for stacks.", InitialDelay = "2s", Interval = "5s")]
-    public class StackEventCountJob : JobWithLockBase, IHealthCheck {
+    public class StackEventCountJob : AppJobWithLockBase, IHealthCheck {
         private readonly StackService _stackService;
         private readonly ILockProvider _lockProvider;
         private DateTime? _lastRun;
@@ -27,8 +27,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(StackEventCountJob));
-
             _lastRun = SystemClock.UtcNow;
             _logger.LogTrace("Start save stack event counts.");
             await _stackService.SaveStackUsagesAsync(cancellationToken: context.CancellationToken).AnyContext();

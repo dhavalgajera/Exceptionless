@@ -17,7 +17,7 @@ using Nest;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Deletes soft deleted data and enforces data retention.", IsContinuous = false)]
-    public class CleanupDataJob : JobWithLockBase, IHealthCheck {
+    public class CleanupDataJob : AppJobWithLockBase, IHealthCheck {
         private readonly IOrganizationRepository _organizationRepository;
         private readonly OrganizationService _organizationService;
         private readonly IProjectRepository _projectRepository;
@@ -61,8 +61,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(CleanupDataJob));
-
             _lastRun = SystemClock.UtcNow;
 
             await CleanupSoftDeletedOrganizationsAsync(context).AnyContext();

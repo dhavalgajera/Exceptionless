@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Sends queued email messages.", InitialDelay = "5s")]
-    public class MailMessageJob : QueueJobBase<MailMessage> {
+    public class MailMessageJob : AppQueueJobBase<MailMessage> {
         private readonly IMailSender _mailSender;
 
         public MailMessageJob(IQueue<MailMessage> queue, IMailSender mailSender, ILoggerFactory loggerFactory = null) : base(queue, loggerFactory) {
@@ -17,8 +17,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> ProcessQueueEntryAsync(QueueEntryContext<MailMessage> context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(MailMessageJob));
-
             _logger.LogTrace("Processing message {Id}.", context.QueueEntry.Id);
 
             try {

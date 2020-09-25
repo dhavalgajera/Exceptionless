@@ -24,7 +24,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Sends daily summary emails.", InitialDelay = "1m", Interval = "1h")]
-    public class DailySummaryJob : JobWithLockBase, IHealthCheck {
+    public class DailySummaryJob : AppJobWithLockBase, IHealthCheck {
         private readonly EmailOptions _emailOptions;
         private readonly IProjectRepository _projectRepository;
         private readonly IOrganizationRepository _organizationRepository;
@@ -53,8 +53,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(DailySummaryJob));
-
             _lastRun = SystemClock.UtcNow;
             
             if (!_emailOptions.EnableDailySummary || _mailer == null)

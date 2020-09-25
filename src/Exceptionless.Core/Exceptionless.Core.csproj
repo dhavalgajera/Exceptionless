@@ -24,6 +24,7 @@
     <PackageReference Include="AutoMapper" Version="10.1.1" />
     <PackageReference Include="AutoMapper.Collection" Version="7.0.0" />
     <PackageReference Include="FluentValidation" Version="9.2.2" />
+    <PackageReference Include="Foundatio" Version="10.0.1-alpha.0.1" />
     <PackageReference Include="Foundatio.Extensions.Hosting" Version="10.0.0" />
     <PackageReference Include="Foundatio.JsonNet" Version="10.0.0" />
     <PackageReference Include="NEST.JsonNetSerializer" Version="7.9.0" />
@@ -38,5 +39,6 @@
 
     <PackageReference Include="Foundatio.Repositories.Elasticsearch" Version="7.9.2" Condition="'$(ReferenceFoundatioRepositoriesSource)' == '' OR '$(ReferenceFoundatioRepositoriesSource)' == 'false'" />
     <ProjectReference Include="..\..\..\Foundatio.Repositories\src\Foundatio.Repositories.Elasticsearch\Foundatio.Repositories.Elasticsearch.csproj" Condition="'$(ReferenceFoundatioRepositoriesSource)' == 'true'" />
+    <PackageReference Include="Foundatio.Repositories.Elasticsearch" Version="7.9.0" Condition="'$(ReferenceFoundatioRepositoriesSource)' == '' OR '$(ReferenceFoundatioRepositoriesSource)' == 'false'" />
   </ItemGroup>
 </Project>

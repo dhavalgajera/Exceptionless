@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Exceptionless.Core.Jobs {
     [Job(Description = "Downloads Geo IP database.", IsContinuous = false)]
-    public class DownloadGeoIPDatabaseJob : JobWithLockBase, IHealthCheck {
+    public class DownloadGeoIPDatabaseJob : AppJobWithLockBase, IHealthCheck {
         public const string GEO_IP_DATABASE_PATH = "GeoLite2-City.mmdb";
         private readonly AppOptions _options;
         private readonly IFileStorage _storage;
@@ -33,8 +33,6 @@ namespace Exceptionless.Core.Jobs {
         }
 
         protected override async Task<JobResult> RunInternalAsync(JobContext context) {
-            using var activity = ActivitySources.JobActivitySource.StartActivity(nameof(DownloadGeoIPDatabaseJob));
-
             _lastRun = SystemClock.UtcNow;
 
             string licenseKey = _options.MaxMindGeoIpKey;
