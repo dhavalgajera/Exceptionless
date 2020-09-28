@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Exceptionless.Tests", "test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Exceptionless.Job", "src\Exceptionless.Job\Exceptionless.Job.csproj", "{788BA00C-FFBE-42A9-92A3-89E24FC137B5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Contrib.Instrumentation.ElasticsearchClient", "..\opentelemetry-dotnet-contrib\src\OpenTelemetry.Contrib.Instrumentation.Elasticsearch\OpenTelemetry.Contrib.Instrumentation.ElasticsearchClient.csproj", "{29706572-6DE7-4883-A5BE-81E0F118E1EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,12 +55,15 @@ Global
 		{788BA00C-FFBE-42A9-92A3-89E24FC137B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{788BA00C-FFBE-42A9-92A3-89E24FC137B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{788BA00C-FFBE-42A9-92A3-89E24FC137B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29706572-6DE7-4883-A5BE-81E0F118E1EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29706572-6DE7-4883-A5BE-81E0F118E1EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29706572-6DE7-4883-A5BE-81E0F118E1EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29706572-6DE7-4883-A5BE-81E0F118E1EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-			GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1A90AFA5-B81C-4B1B-9DFA-2D90F8CA0EF0}
 	EndGlobalSection
 EndGlobal

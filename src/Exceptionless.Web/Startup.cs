@@ -25,6 +25,9 @@ using Serilog;
 using Serilog.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
+using StackExchange.Redis;
 
 namespace Exceptionless.Web {
     public class Startup {
@@ -42,6 +45,16 @@ namespace Exceptionless.Web {
                 .AllowCredentials()
                 .SetPreflightMaxAge(TimeSpan.FromMinutes(5))
                 .WithExposedHeaders("ETag", "Link", Headers.RateLimit, Headers.RateLimitRemaining, "X-Result-Count", Headers.LegacyConfigurationVersion, Headers.ConfigurationVersion)));
+
+            services.AddOpenTelemetryTracing((sp, builder) => builder
+                .SetResource(Resources.CreateServiceResource("Exceptionless"))
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddElasticsearchClientInstrumentation(o => o.ParseAndFormatRequest = true)
+                .AddRedisInstrumentation(sp.GetRequiredService<ConnectionMultiplexer>(), o => o.FlushInterval = TimeSpan.FromMilliseconds(100))
+                .AddSource("Exceptionless*")
+                .AddOtlpExporter(o => o.Endpoint = "localhost:5681")
+                .AddConsoleExporter());
 
             services.Configure<ForwardedHeadersOptions>(options => {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;

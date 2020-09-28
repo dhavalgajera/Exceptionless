@@ -12,6 +12,7 @@ choco install azure-cli
 choco install kubernetes-helm
 helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 helm repo add jetstack https://charts.jetstack.io
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 
 ### setup
@@ -98,7 +99,7 @@ curl -X PUT -H "Content-Type: application/json" -k `
 Remove-Job $ELASTIC_JOB
 
 # install nginx ingress
-helm install nginx-ingress stable/nginx-ingress --namespace nginx-ingress --values nginx-values.yaml
+helm install nginx-ingress ingress-nginx/ingress-nginx --namespace nginx-ingress --values nginx-values.yaml
 
 # wait for external ip to be assigned
 kubectl get service -l app=nginx-ingress --namespace nginx-ingress
