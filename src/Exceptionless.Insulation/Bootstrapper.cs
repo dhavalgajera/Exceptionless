@@ -140,7 +140,7 @@ namespace Exceptionless.Insulation {
             }
         }
 
-        private static ConnectionMultiplexer GetRedisConnection(Dictionary<string, string> options) {
+        private static IConnectionMultiplexer GetRedisConnection(Dictionary<string, string> options) {
             // TODO: Remove this extra config parse step when sentinel bug is fixed
             var config = ConfigurationOptions.Parse(options.GetString("server"));
             return ConnectionMultiplexer.Connect(config);
@@ -303,7 +303,7 @@ namespace Exceptionless.Insulation {
 
         private static RedisCacheClient CreateRedisCacheClient(IServiceProvider container) {
             return new RedisCacheClient(new RedisCacheClientOptions {
-                ConnectionMultiplexer = container.GetRequiredService<ConnectionMultiplexer>(),
+                ConnectionMultiplexer = container.GetRequiredService<IConnectionMultiplexer>(),
                 Serializer = container.GetRequiredService<ISerializer>(),
                 LoggerFactory = container.GetRequiredService<ILoggerFactory>()
             });

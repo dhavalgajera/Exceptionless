@@ -51,7 +51,7 @@ namespace Exceptionless.Web {
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddElasticsearchClientInstrumentation(o => o.ParseAndFormatRequest = true)
-                .AddRedisInstrumentation(sp.GetRequiredService<ConnectionMultiplexer>(), o => o.FlushInterval = TimeSpan.FromMilliseconds(100))
+                .AddRedisInstrumentation(sp.GetRequiredService<IConnectionMultiplexer>(), o => o.FlushInterval = TimeSpan.FromMilliseconds(100))
                 .AddSource("Exceptionless*")
                 .AddOtlpExporter(o => o.Endpoint = "localhost:5681")
                 .AddConsoleExporter());

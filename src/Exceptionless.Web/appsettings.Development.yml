@@ -1,8 +1,8 @@
 ﻿---
 ConnectionStrings:
-#  Redis: server="localhost,abortConnect=false"
+  Redis: server="localhost,abortConnect=false"
 #  Elasticsearch: server=http://localhost:9200
-#  Cache: provider=redis;
+  Cache: provider=redis;
 #  MessageBus: provider=redis;
 #  Queue: provider=redis;
   Storage: provider=folder;path=.\storage
