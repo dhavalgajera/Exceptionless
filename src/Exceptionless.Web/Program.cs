@@ -6,21 +6,30 @@ using App.Metrics;
 using App.Metrics.AspNetCore;
 using App.Metrics.Formatters;
 using App.Metrics.Formatters.Prometheus;
+using Elastic.CommonSchema.Serilog;
+using Elasticsearch.Net;
 using Exceptionless.Core;
 using Exceptionless.Core.Configuration;
 using Exceptionless.Core.Extensions;
 using Exceptionless.Insulation.Configuration;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
+using Serilog.Sinks.Elasticsearch;
 using Serilog.Sinks.Exceptionless;
 
 namespace Exceptionless.Web {
     public class Program {
         public static async Task<int> Main(string[] args) {
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .CreateBootstrapLogger();
+
             try {
                 await CreateHostBuilder(args).Build().RunAsync();
                 return 0;
@@ -58,17 +67,43 @@ namespace Exceptionless.Web {
 
             var options = AppOptions.ReadFromConfiguration(config);
 
-            var loggerConfig = new LoggerConfiguration().ReadFrom.Configuration(config);
-            if (!String.IsNullOrEmpty(options.ExceptionlessApiKey))
-                loggerConfig.WriteTo.Sink(new ExceptionlessSink(), LogEventLevel.Information);
-
-            Log.Logger = loggerConfig.CreateLogger();
             var configDictionary = config.ToDictionary("Serilog");
             Log.Information("Bootstrapping Exceptionless Web in {AppMode} mode ({InformationalVersion}) on {MachineName} with settings {@Settings}", environment, options.InformationalVersion, Environment.MachineName, configDictionary);
 
             var builder = Host.CreateDefaultBuilder()
                 .UseEnvironment(environment)
-                .UseSerilog()
+                .ConfigureLogging(l => l.Configure(o => o.ActivityTrackingOptions = ActivityTrackingOptions.TraceId | ActivityTrackingOptions.SpanId))
+                .UseSerilog((context, services, configuration) => {
+                    if (!String.IsNullOrEmpty(options.ExceptionlessApiKey))
+                        configuration.WriteTo.Sink(new ExceptionlessSink(), LogEventLevel.Information);
+
+                    var httpAccessor = context.Configuration.Get<HttpContextAccessor>();
+
+                    // Create a formatter configuration to se this accessor
+                    var formatterConfig = new EcsTextFormatterConfiguration();
+                    formatterConfig.MapHttpContext(httpAccessor);
+
+                    // Write events to the console using this configration
+                    var formatter = new EcsTextFormatter(formatterConfig);
+
+                    var elasticsearchConnectionString = config.GetConnectionString("Elasticsearch") ?? "http://localhost:9200";
+                    configuration.WriteTo.Elasticsearch(
+                        new ElasticsearchSinkOptions(new Uri(elasticsearchConnectionString)) {
+                            CustomFormatter = formatter,
+                            IndexFormat = $"{options.ElasticsearchOptions.ScopePrefix}-logs-web",
+                            BatchAction = ElasticOpType.Create,
+                            AutoRegisterTemplate = true,
+                            OverwriteTemplate = true,
+                            DetectElasticsearchVersion = true,
+                            NumberOfReplicas = options.AppMode == AppMode.Development ? 0 : 1,
+                            MinimumLogEventLevel = LogEventLevel.Verbose
+                        });
+
+                    configuration
+                        .WriteTo.Console()
+                        .ReadFrom.Configuration(config)
+                        .ReadFrom.Services(services);
+                })
                 .ConfigureWebHostDefaults(webBuilder => {
                     webBuilder
                         .UseConfiguration(config)

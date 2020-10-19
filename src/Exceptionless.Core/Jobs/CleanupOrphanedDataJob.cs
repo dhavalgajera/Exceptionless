@@ -103,7 +103,7 @@ namespace Exceptionless.Core.Jobs {
             var projectCardinality = await _elasticClient.SearchAsync<PersistentEvent>(s => s.Aggregations(a => a
                 .Cardinality("cardinality_project_id", c => c.Field(f => f.ProjectId).PrecisionThreshold(40000))));
 
-            var uniqueProjectIdCount = projectCardinality.Aggregations.Cardinality("cardinality_project_id").Value;
+            var uniqueProjectIdCount = projectCardinality.Aggregations.Cardinality("cardinality_project_id")?.Value;
             if (!uniqueProjectIdCount.HasValue || uniqueProjectIdCount.Value <= 0)
                 return;
 
@@ -120,7 +120,7 @@ namespace Exceptionless.Core.Jobs {
                 var projectIdTerms = await _elasticClient.SearchAsync<PersistentEvent>(s => s.Aggregations(a => a
                     .Terms("terms_project_id", c => c.Field(f => f.ProjectId).Include(batchNumber, buckets).Size(batchSize * 2))));
 
-                var projectIds = projectIdTerms.Aggregations.Terms("terms_project_id").Buckets.Select(b => b.Key).ToArray();
+                var projectIds = projectIdTerms.Aggregations.Terms("terms_project_id")?.Buckets.Select(b => b.Key).ToArray();
                 if (projectIds.Length == 0)
                     continue;
 
@@ -163,7 +163,7 @@ namespace Exceptionless.Core.Jobs {
                 var organizationIdTerms = await _elasticClient.SearchAsync<PersistentEvent>(s => s.Aggregations(a => a
                     .Terms("terms_organization_id", c => c.Field(f => f.OrganizationId).Include(batchNumber, buckets).Size(batchSize * 2))));
 
-                var organizationIds = organizationIdTerms.Aggregations.Terms("terms_organization_id").Buckets.Select(b => b.Key).ToArray();
+                var organizationIds = organizationIdTerms.Aggregations.Terms("terms_organization_id")?.Buckets.Select(b => b.Key).ToArray();
                 if (organizationIds.Length == 0)
                     continue;
 
@@ -193,7 +193,7 @@ namespace Exceptionless.Core.Jobs {
                 .Aggregations(a => a.Terms("stacks", t => t.Field(f => f.DuplicateSignature).MinimumDocumentCount(2).Size(10000))));
             _logger.LogRequest(duplicateStackAgg, LogLevel.Trace);
 
-            var buckets = duplicateStackAgg.Aggregations.Terms("stacks").Buckets;
+            var buckets = duplicateStackAgg.Aggregations.Terms("stacks")?.Buckets;
             int total = buckets.Count;
             int processed = 0;
             int error = 0;
