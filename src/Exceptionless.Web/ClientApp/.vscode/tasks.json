@@ -5,8 +5,7 @@
             "type": "shell",
             "label": "build",
             "dependsOn": [
-                "npm install",
-                "bower install"
+                "npm install"
             ],
             "command": "node_modules/.bin/grunt",
             "args": [
@@ -58,19 +57,6 @@
             "label": "npm install",
             "script": "install",
             "path": "${workspaceFolder}/",
-            "problemMatcher": []
-        },
-        {
-            "type": "shell",
-            "label": "bower install",
-            "dependsOn": "npm install",
-            "command": "node_modules/.bin/bower",
-            "args": [
-                "install"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}/"
-            },
             "problemMatcher": []
         }
     ]

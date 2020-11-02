@@ -193,12 +193,6 @@ namespace Exceptionless.Web {
                     .From("http://cdn.jsdelivr.net");
             });
 
-            var contentTypeProvider = new FileExtensionContentTypeProvider {
-                Mappings = {
-                    [".less"] = "plain/text"
-                }
-            };
-
             app.Use(async (context, next) => {
                 if (options.AppMode != AppMode.Development && context.Request.IsLocal() == false)
                     context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
@@ -230,17 +224,13 @@ namespace Exceptionless.Web {
             });
 
             app.UseDefaultFiles();
-            app.UseStaticFiles(new StaticFileOptions {
+            app.UseSpaStaticFiles(new StaticFileOptions {
                 ContentTypeProvider = new FileExtensionContentTypeProvider {
                     Mappings = {
                         [".less"] = "plain/text"
                     }
                 }
             });
-            app.UseStaticFiles(new StaticFileOptions {
-                ContentTypeProvider = contentTypeProvider
-            });
-            app.UseSpaStaticFiles();
 
             app.UseFileServer();
             app.UseRouting();
@@ -256,7 +246,7 @@ namespace Exceptionless.Web {
 
             if (options.ApiThrottleLimit < Int32.MaxValue) {
                 // Throttle api calls to X every 15 minutes by IP address.
-                //app.UseMiddleware<ThrottlingMiddleware>();
+                app.UseMiddleware<ThrottlingMiddleware>();
             }
 
             // Reject event posts in organizations over their max event limits.

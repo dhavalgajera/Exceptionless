@@ -50,7 +50,7 @@ module.exports = function (grunt) {
   grunt.registerTask('default', ['build']);
   grunt.registerTask('zip', ['compress']);
   grunt.registerTask('publish', ['gh-pages']);
-  grunt.registerTask('serve', ['dom_munger:read', 'jshint', 'replace', 'connect', 'watch']);
+  grunt.registerTask('serve', ['dom_munger:read', 'jshint', 'connect', 'watch']);
   grunt.registerTask('test', ['dom_munger:read', 'karma:all_tests']);
 
   grunt.event.on('watch', function (action, filepath) {
