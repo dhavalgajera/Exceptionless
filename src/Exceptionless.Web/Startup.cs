@@ -199,11 +199,6 @@ namespace Exceptionless.Web {
                 }
             };
 
-            app.UseStaticFiles(new StaticFileOptions {
-                ContentTypeProvider = contentTypeProvider
-            });
-            app.UseSpaStaticFiles();
-
             app.Use(async (context, next) => {
                 if (options.AppMode != AppMode.Development && context.Request.IsLocal() == false)
                     context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
@@ -233,6 +228,8 @@ namespace Exceptionless.Web {
 
                 return LogEventLevel.Information;
             });
+
+            app.UseDefaultFiles();
             app.UseStaticFiles(new StaticFileOptions {
                 ContentTypeProvider = new FileExtensionContentTypeProvider {
                     Mappings = {
@@ -240,8 +237,11 @@ namespace Exceptionless.Web {
                     }
                 }
             });
+            app.UseStaticFiles(new StaticFileOptions {
+                ContentTypeProvider = contentTypeProvider
+            });
+            app.UseSpaStaticFiles();
 
-            app.UseDefaultFiles();
             app.UseFileServer();
             app.UseRouting();
             app.UseCors("AllowAny");
@@ -276,14 +276,14 @@ namespace Exceptionless.Web {
                 app.UseMiddleware<MessageBusBrokerMiddleware>();
             }
 
-            app.UseSpa(spa => {
-                // To learn more about options for serving an Angular SPA from ASP.NET Core,
-                // see https://go.microsoft.com/fwlink/?linkid=864501
+            app.UseEndpoints(endpoints => {
+                endpoints.MapControllers();
+            });
 
+            app.UseSpa(spa => {
                 spa.Options.SourcePath = "ClientApp";
-                
                 if (options.AppMode == AppMode.Development)
-                    spa.UseProxyToSpaDevelopmentServer("http://localhost:5100");
+                    spa.UseAngularDevelopmentServer();
             });
         }
     }
