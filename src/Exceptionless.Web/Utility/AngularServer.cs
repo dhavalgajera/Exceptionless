@@ -29,20 +29,23 @@ namespace Exceptionless.Web.Utility {
                 string version = "0.0.0";
                 try {
                     var versionInfo = FileVersionInfo.GetVersionInfo(typeof(Connection).Assembly.Location);
-                    version = versionInfo.FileVersion;
                     version = versionInfo.ProductVersion;
+                    var parts = version.Split('+');
+                    if (parts.Length == 2)
+                        version = parts[0];
                 }
                 catch { }
 
                 var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
                 var processInfo = new ProcessStartInfo {
                     FileName = isWindows ? "cmd" : "npm",
-                    Arguments = $"{(isWindows ? "/c npm " : "")}run serve -- --app-version={version}",
+                    Arguments = $"{(isWindows ? "/c npm " : "")}run serve",
                     WorkingDirectory = "ClientApp",
                     RedirectStandardError = true,
                     RedirectStandardInput = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
+                    EnvironmentVariables = { { "UI_VERSION", version } }
                 };
 
                 var process = Process.Start(processInfo);
