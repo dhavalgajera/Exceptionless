@@ -5,6 +5,10 @@
     .factory('stacksActionsService', function ($ExceptionlessClient, dialogService, stackDialogService, stackService, notificationService, translateService, $q) {
       var source = 'exceptionless.stacks.stacksActionsService';
 
+      function actionWithParameter(action, parameter) {
+        return function(ids) { return action(ids, parameter); };
+      }
+
       function executeAction(ids, action, onSuccess, onFailure) {
         var deferred = $q.defer();
         var promise = _.chunk(ids, 10).reduce(function (previous, item) {
@@ -14,6 +18,23 @@
         deferred.resolve();
         return promise;
       }
+
+      var markOpenAction = {
+        name: 'Mark Open',
+        run: function (ids) {
+          function onSuccess() {
+            notificationService.info(translateService.T('Successfully marked the stacks as open.'));
+          }
+
+          function onFailure() {
+            $ExceptionlessClient.createFeatureUsage(source + '.mark-open.error').setProperty('count', ids.length).submit();
+            notificationService.error(translateService.T('An error occurred while marking stacks as open.'));
+          }
+
+          $ExceptionlessClient.createFeatureUsage(source + '.mark-open').setProperty('count', ids.length).submit();
+          return executeAction(ids, actionWithParameter(stackService.changeStatus, "open"), onSuccess, onFailure);
+        }
+      };
 
       var deleteAction = {
         name: 'Delete',
@@ -40,7 +61,7 @@
           $ExceptionlessClient.createFeatureUsage(source + '.mark-fixed').setProperty('count', ids.length).submit();
           return stackDialogService.markFixed().then(function (version) {
             function onSuccess() {
-              notificationService.info(translateService.T('Successfully queued the stacks to be marked as fixed.'));
+              notificationService.info(translateService.T('Successfully marked the stacks as fixed.'));
             }
 
             function onFailure() {
@@ -48,64 +69,47 @@
               notificationService.error(translateService.T('An error occurred while marking stacks as fixed.'));
             }
 
-            return executeAction(ids, function(ids) { return stackService.markFixed(ids, version); }, onSuccess, onFailure);
+            return executeAction(ids, actionWithParameter(stackService.markFixed, version), onSuccess, onFailure);
           }).catch(function(e){});
         }
       };
 
-      var markNotFixedAction = {
-        name: 'Mark Not Fixed',
+      var markIgnoredAction = {
+        name: 'Mark Ignored',
         run: function (ids) {
           function onSuccess() {
-            notificationService.info(translateService.T('Successfully queued the stacks to be marked as not fixed.'));
+            notificationService.info(translateService.T('Successfully marked the stacks as ignored.'));
           }
 
           function onFailure() {
-            $ExceptionlessClient.createFeatureUsage(source + '.mark-not-fixed.error').setProperty('count', ids.length).submit();
-            notificationService.error(translateService.T('An error occurred while marking stacks as not fixed.'));
+            $ExceptionlessClient.createFeatureUsage(source + '.mark-ignored.error').setProperty('count', ids.length).submit();
+            notificationService.error(translateService.T('An error occurred while marking stacks as ignored.'));
           }
 
-          $ExceptionlessClient.createFeatureUsage(source + '.mark-not-fixed').setProperty('count', ids.length).submit();
-          return executeAction(ids, stackService.markNotFixed, onSuccess, onFailure);
+          $ExceptionlessClient.createFeatureUsage(source + '.mark-ignored').setProperty('count', ids.length).submit();
+          return executeAction(ids, actionWithParameter(stackService.changeStatus, "ignored"), onSuccess, onFailure);
         }
       };
 
-      var markHiddenAction = {
-        name: 'Mark Hidden',
+      var markDiscardedAction = {
+        name: 'Mark Discarded',
         run: function (ids) {
           function onSuccess() {
-            notificationService.info(translateService.T('Successfully queued the stacks to be marked as hidden.'));
+            notificationService.info(translateService.T('Successfully marked the stacks as discarded.'));
           }
 
           function onFailure() {
-            $ExceptionlessClient.createFeatureUsage(source + '.mark-hidden.error').setProperty('count', ids.length).submit();
-            notificationService.error(translateService.T('An error occurred while marking stacks as hidden.'));
+            $ExceptionlessClient.createFeatureUsage(source + '.mark-discarded.error').setProperty('count', ids.length).submit();
+            notificationService.error(translateService.T('An error occurred while marking stacks as discarded.'));
           }
 
-          $ExceptionlessClient.createFeatureUsage(source + '.mark-hidden').setProperty('count', ids.length).submit();
-          return executeAction(ids, stackService.markHidden, onSuccess, onFailure);
-        }
-      };
-
-      var markNotHiddenAction = {
-        name: 'Mark Not Hidden',
-        run: function (ids) {
-          function onSuccess() {
-            notificationService.info(translateService.T('Successfully queued the stacks to be marked as not hidden.'));
-          }
-
-          function onFailure() {
-            $ExceptionlessClient.createFeatureUsage(source + '.mark-not-hidden.error').setProperty('count', ids.length).submit();
-            notificationService.error(translateService.T('An error occurred while marking stacks as not hidden.'));
-          }
-
-          $ExceptionlessClient.createFeatureUsage(source + '.mark-not-hidden').setProperty('count', ids.length).submit();
-          return executeAction(ids, stackService.markNotHidden, onSuccess, onFailure);
+          $ExceptionlessClient.createFeatureUsage(source + '.mark-discarded').setProperty('count', ids.length).submit();
+          return executeAction(ids, actionWithParameter(stackService.changeStatus, "discarded"), onSuccess, onFailure);
         }
       };
 
       function getActions() {
-        return [markFixedAction, markNotFixedAction, markHiddenAction, markNotHiddenAction, deleteAction];
+        return [markOpenAction, markFixedAction, markIgnoredAction, markDiscardedAction, deleteAction];
       }
 
       var service = {

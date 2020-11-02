@@ -2,7 +2,7 @@
   'use strict';
 
   angular.module('app')
-    .controller('App', function ($rootScope, $scope, $state, $stateParams, $window, authService, billingService, $ExceptionlessClient, filterService, hotkeys, INTERCOM_APPID, $intercom, locker, notificationService, organizationService, websocketService, stateService, SLACK_APPID, STRIPE_PUBLISHABLE_KEY, urlService, userService, translateService) {
+    .controller('App', function ($rootScope, $scope, $state, $stateParams, $window, authService, billingService, $ExceptionlessClient, filterService, hotkeys, INTERCOM_APPID, $intercom, locker, notificationService, organizationService, websocketService, stateService, statusService, SLACK_APPID, STRIPE_PUBLISHABLE_KEY, urlService, userService, translateService) {
       var vm = this;
       function addHotkeys() {
         function logFeatureUsage(name) {
@@ -58,10 +58,10 @@
           })
           .add({
             combo: 'g d',
-            description: translateService.T('Go To Dashboard'),
-            callback: function goToDashboard() {
-              logFeatureUsage('Dashboard');
-              $window.open(vm.dashboardUrl.all, '_self');
+            description: translateService.T('Go To Most Frequent'),
+            callback: function goToMostFrequent() {
+              logFeatureUsage('Most Frequent');
+              $window.open(vm.eventsUrl.all, '_self');
             }
           })
           .add({
@@ -100,26 +100,29 @@
 
       function buildMenus() {
         function getFilterUrl(route, type) {
-          return urlService.buildFilterUrl({ route: route, projectId: filterService.getProjectId(), organizationId: filterService.getOrganizationId(),  type: type });
+          return urlService.buildFilterUrl({ route: route, projectId: filterService.getProjectId(), organizationId: filterService.getOrganizationId(), type: type });
         }
 
         function buildUrls() {
           var result = {
-            dashboard: {},
-            sessionDashboard: urlService.buildFilterUrl({ route: 'dashboard', routePrefix: 'session', projectId: filterService.getProjectId(), organizationId: filterService.getOrganizationId() }),
-            recent: {},
+            events: {},
             frequent: {},
             users: {},
-            new: {}
+            new: {},
+            reports: {}
           };
 
           [undefined, 'error', 'log', '404', 'usage'].forEach(function(type) {
             var key = !type ? 'all' : type;
-            result.dashboard[key] = getFilterUrl('dashboard', type);
-            result.recent[key] = getFilterUrl('recent', type);
+            result.events[key] = getFilterUrl('events', type);
             result.frequent[key] = getFilterUrl('frequent', type);
             result.users[key] = getFilterUrl('users', type);
             result.new[key] = getFilterUrl('new', type);
+          });
+
+          result.reports.sessions = urlService.buildFilterUrl({ route: 'events', routePrefix: 'session', projectId: filterService.getProjectId(), organizationId: filterService.getOrganizationId() });
+          ['regressed', 'fixed', 'snoozed', 'ignored', 'discarded'].forEach(function(status) {
+            result.reports[status] = urlService.buildFilterUrl({ moduleName: 'app.reports', route: 'status', projectId: filterService.getProjectId(), organizationId: filterService.getOrganizationId() }, { status: status });
           });
 
           return result;
@@ -137,7 +140,7 @@
           }).length > 0;
         }
 
-        function isAdminMenuActive(state, params) {
+        function isSettingsMenuActive(state, params) {
           return state.includes('app.project.list', params) ||
             state.includes('app.organization.list', params) ||
             state.includes('app.account.manage', params) ||
@@ -145,9 +148,11 @@
         }
 
         function isReportsMenuActive(state, params) {
-          return state.includes('app.session-dashboard', params) ||
-            state.includes('app.session-project-dashboard', params) ||
-            state.includes('app.session-organization-dashboard', params);
+          return state.includes('app.session.events', params) ||
+            state.includes('app.session-events', params) ||
+            state.includes('app.session-project-events', params) ||
+            state.includes('app.session-organization-events', params) ||
+            state.current.name.contains('app.reports.');
         }
 
         function isTypeMenuActive(state, params, type) {
@@ -163,17 +168,26 @@
           }).length > 0;
         }
 
-        var dashboards = ['dashboard', 'frequent', 'new', 'recent', 'users'];
+        var dashboards = ['frequent', 'new', 'users', 'events'];
         vm.urls = buildUrls();
-        vm.isMenuActive = {
+
+        var isMenuActive = {
           all: isAllMenuActive($state, $stateParams),
           error: isTypeMenuActive($state, $stateParams, 'error'),
           log: isTypeMenuActive($state, $stateParams, 'log'),
           '404': isTypeMenuActive($state, $stateParams, '404'),
           usage: isTypeMenuActive($state, $stateParams, 'usage'),
-          admin: isAdminMenuActive($state, $stateParams),
+          settings: isSettingsMenuActive($state, $stateParams),
           reports: isReportsMenuActive($state, $stateParams)
         };
+
+        var hasActiveMenu = Object.keys(isMenuActive).some(function(prop) { return isMenuActive[prop]; });
+        if (hasActiveMenu) {
+          vm.isMenuActive = isMenuActive;
+        } else if (Object.keys(vm.isMenuActive).length === 0) {
+          isMenuActive.all = true;
+          vm.isMenuActive = isMenuActive;
+        }
       }
 
       function changePlan(organizationId) {
@@ -183,6 +197,16 @@
         }
 
         return billingService.changePlan(organizationId).catch(function(e){});
+      }
+
+      function getApiVersion() {
+        function onSuccess(response) {
+          var aboutResponse = response.data.plain();
+          vm.apiVersionNumber = aboutResponse && aboutResponse.informational_version.split("+")[0];
+          return response;
+        }
+
+        return statusService.about().then(onSuccess);
       }
 
       function getOrganizations() {
@@ -251,15 +275,15 @@
         vm._source = 'app.App';
         vm._store = locker.driver('local').namespace('app');
 
+        vm.apiVersionNumber = "";
         vm.canChangePlan = false;
         vm.changePlan = changePlan;
         vm.urls = {
-          dashboard: {},
-          sessionDashboard: '',
-          recent: {},
+          events: {},
           frequent: {},
           users: {},
-          new: {}
+          new: {},
+          reports: {}
         };
         vm.getOrganizations = getOrganizations;
         vm.getUser = getUser;
@@ -274,7 +298,7 @@
 
         addHotkeys();
         buildMenus();
-        getUser().then(getOrganizations).then(startWebSocket);
+        getUser().then(getOrganizations).then(startWebSocket).then(getApiVersion);
       };
     });
 }());

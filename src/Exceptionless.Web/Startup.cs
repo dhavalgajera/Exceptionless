@@ -19,8 +19,6 @@ using Exceptionless.Web.Extensions;
 using Foundatio.Extensions.Hosting.Startup;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Serilog;

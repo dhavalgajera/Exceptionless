@@ -20,24 +20,30 @@
         var vm = this;
         function buildUrls() {
           function getOrganizationUrl(organization) {
-            if (isOnSessionDashboard()) {
+            if (isOnSessionEvents()) {
               return urlService.buildFilterUrl({ route: getStateName(), routePrefix: 'session', organizationId: organization.id });
+            } else if (isOnReports()) {
+              return urlService.buildFilterUrl({ moduleName: 'app.reports', route: 'status', organizationId: organization.id }, { status: filterService.getStatus() });
             }
 
             return urlService.buildFilterUrl({ route: getStateName(), organizationId: organization.id, type: $stateParams.type });
           }
 
           function getAllProjectsUrl() {
-            if (isOnSessionDashboard()) {
+            if (isOnSessionEvents()) {
               return urlService.buildFilterUrl({ route: getStateName(), routePrefix: 'session' });
+            } else if (isOnReports()) {
+              return urlService.buildFilterUrl({ moduleName: 'app.reports', route: 'status' }, { status: filterService.getStatus() });
             }
 
             return urlService.buildFilterUrl({ route: getStateName(), type: $stateParams.type });
           }
 
           function getProjectUrl(project) {
-            if (isOnSessionDashboard()) {
+            if (isOnSessionEvents()) {
               return urlService.buildFilterUrl({ route: getStateName(), routePrefix: 'session', projectId: project.id });
+            } else if (isOnReports()) {
+              return urlService.buildFilterUrl({ moduleName: 'app.reports', route: 'status', projectId: project.id }, { status: filterService.getStatus() });
             }
 
             return urlService.buildFilterUrl({ route: getStateName(), projectId: project.id, type: $stateParams.type });
@@ -125,8 +131,36 @@
           return projectService.getAll().then(onSuccess, onFailure);
         }
 
-        function getProjectsByOrganizationId(id) {
-          return vm.projects.filter(function (project) { return project.organization_id === id; });
+        function getFilteredOrganizations() {
+          var filter = vm.filter && vm.filter.toLocaleLowerCase();
+
+          return vm.organizations.filter(function (organization) {
+            if (!filter || organization.name.toLocaleLowerCase().includes(filter))
+              return organization;
+
+            var hasProjectMatchingFilter = vm.projects.find(function (p) {
+              return p.organization_id === organization.id && p.name.toLocaleLowerCase().includes(filter);
+            });
+
+            if (hasProjectMatchingFilter)
+              return organization;
+
+            return null;
+          });
+        }
+
+        function getFilteredProjectsByOrganizationId(id) {
+          var filter = vm.filter && vm.filter.toLocaleLowerCase();
+
+          return vm.projects.filter(function (project) {
+            if (project.organization_id !== id)
+              return null;
+
+            if (!filter || project.name.toLocaleLowerCase().includes(filter) || project.organization_name.toLocaleLowerCase().includes(filter))
+              return project;
+
+            return null;
+          });
         }
 
         function getStateName() {
@@ -138,19 +172,23 @@
             return 'new';
           }
 
-          if ($state.current.name.endsWith('recent')) {
-            return 'recent';
-          }
-
           if ($state.current.name.endsWith('users')) {
             return 'users';
           }
 
-          return 'dashboard';
+          return 'events';
         }
 
-        function isOnSessionDashboard() {
-          return $state.current.name.contains('session-') || $state.current.name === 'app.session.dashboard';
+        function isOnSessionEvents() {
+          return $state.current.name.contains('app.session-') || $state.current.name === 'app.session.events';
+        }
+
+        function isOnReports() {
+          return $state.current.name.contains('app.reports.');
+        }
+
+        function showSearch() {
+          return vm.projects.length >= 20 || vm.organizations.length >= 20;
         }
 
         function update() {
@@ -174,11 +212,14 @@
 
           vm.filteredDisplayName = 'Loading';
           vm.get = get;
-          vm.getProjectsByOrganizationId = getProjectsByOrganizationId;
+          vm.getFilteredOrganizations = getFilteredOrganizations;
+          vm.getFilteredProjectsByOrganizationId = getFilteredProjectsByOrganizationId;
+          vm.filter = "";
           vm.isLoadingOrganizations = true;
           vm.isLoadingProjects = true;
           vm.organizations = [];
           vm.projects = [];
+          vm.showSearch = showSearch;
           vm.urls = buildUrls();
           vm.update = update;
 

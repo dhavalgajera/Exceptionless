@@ -65,6 +65,26 @@
         notificationService.success(translateService.T('Copied!'));
       }
 
+      function enable(token) {
+        return dialogService.confirm(translateService.T('Are you sure you want to enable the API key?'), translateService.T('ENABLE API KEY')).then(function () {
+          function onFailure() {
+            notificationService.error(translateService.T('An error occurred while enabling the API key.'));
+          }
+
+          return tokenService.update(token.id, { is_disabled: false }).catch(onFailure);
+        }).catch(function(e){});
+      }
+
+      function disable(token) {
+        return dialogService.confirmDanger(translateService.T('Are you sure you want to disable the API key?'), translateService.T('DISABLE API KEY')).then(function () {
+          function onFailure() {
+            notificationService.error(translateService.T('An error occurred while disabling the API key.'));
+          }
+
+          return tokenService.update(token.id, { is_disabled: true }).catch(onFailure);
+        }).catch(function(e){});
+      }
+
       function get(data) {
         if (vm._ignoreRefresh) {
           return;
@@ -101,6 +121,7 @@
           vm.remainingEventLimit = getRemainingEventLimit(vm.organization);
           vm.canChangePlan = !!STRIPE_PUBLISHABLE_KEY && vm.organization;
 
+          vm.project.usage = vm.project.usage || [];
           vm.organization.usage = (vm.organization.usage || [{ date: moment.utc().startOf('month').toISOString(), total: 0, blocked: 0, limit: vm.organization.max_events_per_month, too_big: 0 }]).filter(function (usage) {
             return vm.project.usage.some(function(u) { return moment(u.date).isSame(usage.date); });
           });
@@ -130,7 +151,7 @@
         }
 
         function onFailure() {
-          $state.go('app.dashboard');
+          $state.go('app.frequent');
           notificationService.error(translateService.T('Cannot_Find_Organization',{organizationId: vm.project.organization_id}));
         }
 
@@ -515,7 +536,7 @@
                   .setProperty('end', end)
                   .submit();
 
-                $state.go('app.project-dashboard', { projectId: vm.project.id });
+                $state.go('app.project-frequent', { projectId: vm.project.id });
                 return false;
               }
             },
@@ -534,6 +555,8 @@
         vm.copied = copied;
         vm.common_methods = null;
         vm.data_exclusions = null;
+        vm.disable = disable;
+        vm.enable = enable;
         vm.get = get;
         vm.getOrganization = getOrganization;
         vm.getTokens = getTokens;

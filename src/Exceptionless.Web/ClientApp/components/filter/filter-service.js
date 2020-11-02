@@ -1,18 +1,18 @@
-﻿(function () {
+(function () {
   'use strict';
 
   angular.module('exceptionless.filter')
     .factory('filterService', function ($rootScope, dateRangeParserService, filterStoreService, objectIDService, organizationService) {
       var DEFAULT_TIME_FILTER = 'last week';
       var _time = filterStoreService.getTimeFilter() || DEFAULT_TIME_FILTER;
-      var _eventType, _organizationId, _projectId, _raw;
+      var _eventType, _organizationId, _projectId, _raw, _status;
 
-      function apply(source, includeHiddenAndFixedFilter) {
-        return angular.extend({}, getDefaultOptions(includeHiddenAndFixedFilter), source);
+      function apply(source, includeStatusFilter) {
+        return angular.extend({}, getDefaultOptions(includeStatusFilter), source);
       }
 
-      function buildFilter(includeHiddenAndFixedFilter) {
-        includeHiddenAndFixedFilter = (typeof includeHiddenAndFixedFilter !== 'undefined') ?  includeHiddenAndFixedFilter : true;
+      function buildFilter(includeStatusFilter) {
+        includeStatusFilter = (typeof includeStatusFilter !== 'undefined') ?  includeStatusFilter : true;
         var filters = [];
 
         if (_organizationId) {
@@ -27,17 +27,16 @@
           filters.push('type:' + _eventType);
         }
 
+        if (_status) {
+          filters.push('status:' + _status);
+        }
+
         var filter = _raw || '';
         var isWildCardFilter = filter.trim() === '*';
-        if (includeHiddenAndFixedFilter && !isWildCardFilter) {
-          var hasFixed = filter.search(/\bfixed:/i) !== -1;
-          if (!hasFixed) {
-            filters.push('fixed:false');
-          }
-
-          var hasHidden = filter.search(/\bhidden:/i) !== -1;
-          if (!hasHidden) {
-            filters.push('hidden:false');
+        if (includeStatusFilter && !isWildCardFilter && !_status) {
+          var hasStatus = filter.search(/\bstatus:/i) !== -1;
+          if (!hasStatus) {
+            filters.push('(status:open OR status:regressed)');
           }
         }
 
@@ -66,17 +65,18 @@
         fireFilterChanged();
       }
 
-      function fireFilterChanged(includeHiddenAndFixedFilter) {
+      function fireFilterChanged(includeStatusFilter) {
         var options = {
           organization_id: _organizationId,
           project_id: _projectId,
-          type: _eventType
+          type: _eventType,
+          status: _status
         };
 
-        $rootScope.$emit('filterChanged', angular.extend(options, getDefaultOptions(includeHiddenAndFixedFilter)));
+        $rootScope.$emit('filterChanged', angular.extend(options, getDefaultOptions(includeStatusFilter)));
       }
 
-      function getDefaultOptions(includeHiddenAndFixedFilter) {
+      function getDefaultOptions(includeStatusFilter) {
         var options = {};
 
         var offset = getTimeOffset();
@@ -84,7 +84,7 @@
           angular.extend(options, { offset: offset });
         }
 
-        var filter = buildFilter(includeHiddenAndFixedFilter);
+        var filter = buildFilter(includeStatusFilter);
         if (filter) {
           angular.extend(options, { filter: filter });
         }
@@ -110,6 +110,10 @@
 
       function getEventType() {
         return _eventType;
+      }
+
+      function getStatus() {
+        return _status;
       }
 
       function getOldestPossibleEventDate() {
@@ -179,6 +183,18 @@
         }
 
         _eventType = eventType;
+
+        if (!suspendNotifications) {
+          fireFilterChanged();
+        }
+      }
+
+      function setStatus(status, suspendNotifications) {
+        if (angular.equals(status, _status)) {
+          return;
+        }
+
+        _status = status;
 
         if (!suspendNotifications) {
           fireFilterChanged();
@@ -258,6 +274,7 @@
         getProjectId: getProjectId,
         getOrganizationId: getOrganizationId,
         getOldestPossibleEventDate: getOldestPossibleEventDate,
+        getStatus: getStatus,
         getTime: getTime,
         getTimeRange: getTimeRange,
         getTimeOffset: getTimeOffset,
@@ -267,6 +284,7 @@
         setFilter: setFilter,
         setOrganizationId: setOrganizationId,
         setProjectId: setProjectId,
+        setStatus: setStatus,
         setTime: setTime
       };
 

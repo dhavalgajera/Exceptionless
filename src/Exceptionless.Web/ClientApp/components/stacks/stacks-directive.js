@@ -44,7 +44,14 @@
             }
 
             function onFailure(response) {
-              $ExceptionlessClient.createLog(vm._source + '.get', 'Error while loading events', 'Error').setProperty('options', options).setProperty('response', response).submit();
+              if (response.status !== 404 && response.data) {
+                notificationService.error("Error loading stacks: " + (response.data.message || response.data));
+              }
+
+              $ExceptionlessClient.createLog(vm._source + '.get', 'Error while loading stacks', 'Error').setProperty('options', options).setProperty('response', response).submit();
+              vm.stacks = [];
+              vm.previous = null;
+              vm.next = null;
               return response;
             }
 
@@ -113,6 +120,7 @@
             vm.previousPage = previousPage;
             vm.save = save;
             vm.selectedIds = [];
+            vm.showStatus = vm.settings.summary ? vm.settings.showStatus : !filterService.getStatus();
             vm.showType = vm.settings.summary ? vm.settings.showType : !filterService.getEventType();
             vm.stacks = [];
             vm.updateSelection = updateSelection;

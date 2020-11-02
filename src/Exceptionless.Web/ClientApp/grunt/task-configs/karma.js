@@ -1,13 +1,16 @@
 /* jslint node: true */
+var puppeteer = require('puppeteer');
+process.env.CHROME_BIN = puppeteer.executablePath();
+
 module.exports = function (grunt) {
     return {
         options: {
             frameworks: ['jasmine'],
             files: [  //this files data is also updated in the watch handler, if updated change there too
-                'bower_components/jquery/dist/jquery.js',
-                'bower_components/boostrap/dist/js/bootstrap.js',
+                'node_modules/jquery/dist/jquery.js',
+                'node_modules/boostrap/dist/js/bootstrap.js',
                 '<%= dom_munger.data.appjs %>',
-                'bower_components/angular-mocks/angular-mocks.js',
+                'node_modules/angular-mocks/angular-mocks.js',
                 grunt.option('folderGlobs')('*-spec.js'),
 
                 'components/summary/**/*.html'
